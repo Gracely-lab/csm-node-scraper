@@ -4,6 +4,3 @@
     "consumer_key": "ck_dfaea82361449d413954b02e45626a9120cb82f9",
     "consumer_secret": "cs_78dcf0ed552f9efcb917eec9c50632451408c33f"
   },
-  "fulfillment": "manual",
-  "libretranslate_url": "https://libretranslate.de/translate"
-}
