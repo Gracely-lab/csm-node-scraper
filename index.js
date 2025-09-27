@@ -19,7 +19,7 @@ const wooApi = axios.create({
   },
 });
 
-// --- Scrape Example ---
+// --- Scrape + OCR + Translation ---
 app.post("/scrape", async (req, res) => {
   try {
     const { url, language } = req.body;
@@ -27,17 +27,35 @@ app.post("/scrape", async (req, res) => {
     const $ = cheerio.load(response.data);
 
     let title = $("title").text() || "Untitled";
+
+    // Collect images
     let images = [];
     $("img").each((_, img) => {
-      images.push($(img).attr("src"));
+      let src = $(img).attr("src");
+      if (src) images.push(src);
     });
+
+    // OCR + Translate on all images
+    let imageData = [];
+    for (let src of images) {
+      try {
+        const ocrText = await runOCR(src);
+        const translatedText = ocrText
+          ? await translateText(ocrText, language || "en")
+          : "";
+        imageData.push({ src, ocrText, translatedText });
+      } catch (e) {
+        console.warn("OCR failed for image:", src, e.message);
+        imageData.push({ src, ocrText: "", translatedText: "" });
+      }
+    }
 
     // Translate title
     const translatedTitle = await translateText(title, language || "en");
 
     res.json({
       title: translatedTitle,
-      images,
+      images: imageData,
       source: url,
     });
   } catch (err) {
@@ -48,13 +66,27 @@ app.post("/scrape", async (req, res) => {
 // --- Add Product to WooCommerce ---
 app.post("/import", async (req, res) => {
   try {
-    const { name, images, description, price } = req.body;
+    const { name, images, description, price, imageData } = req.body;
+
+    // Merge OCR-translated texts into description
+    let extraText = "";
+    if (imageData && imageData.length > 0) {
+      extraText =
+        "<br><h4>Image Texts:</h4><ul>" +
+        imageData
+          .map(
+            (img) =>
+              `<li><b>${img.src}</b>: ${img.translatedText || img.ocrText}</li>`
+          )
+          .join("") +
+        "</ul>";
+    }
 
     const product = {
       name,
       type: "simple",
       regular_price: price || "10.00",
-      description: description || "",
+      description: (description || "") + extraText,
       images: images.map((src) => ({ src })),
     };
 
