@@ -1,17 +1,12 @@
-{
-  "name": "csm-scraper-final",
-  "version": "1.0.0",
-  "description": "Taobao & 1688 Scraper with OCR and Translation for CheaperShoppingMall",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "tesseract.js": "^4.0.2",
-    "node-fetch": "^2.6.7"
-  }
-}
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package.json ./
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
