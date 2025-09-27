@@ -1,23 +1,13 @@
-\
-const Tesseract = require('tesseract.js');
-const axios = require('axios');
+const Tesseract = require("tesseract.js");
 
-async function doOCRonImage(imageUrl){
+async function runOCR(imageUrl) {
   try {
-    const resp = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 20000 });
-    const buffer = Buffer.from(resp.data, 'binary');
-    const { createWorker } = Tesseract;
-    const worker = createWorker();
-    await worker.load();
-    await worker.loadLanguage('chi_sim');
-    await worker.initialize('chi_sim');
-    const { data: { text } } = await worker.recognize(buffer);
-    await worker.terminate();
-    return text;
-  } catch (e) {
-    console.warn('OCR error', e.message);
-    return '';
+    const { data } = await Tesseract.recognize(imageUrl, "chi_sim");
+    return data.text.trim();
+  } catch (error) {
+    console.error("OCR error:", error.message);
+    return "";
   }
 }
 
-module.exports = { doOCRonImage };
+module.exports = { runOCR };
