@@ -1,22 +1,21 @@
-\
-const axios = require('axios');
-const settings = require('./settings.json');
+const axios = require("axios");
 
-async function translateText(text, target='en'){
-  if(!text || typeof text !== 'string' || text.trim().length===0) return '';
+// Free LibreTranslate instance (you can self-host if needed)
+const API_URL = "https://libretranslate.de/translate";
+
+async function translateText(text, targetLang = "en") {
+  if (!text || text.trim() === "") return "";
   try {
-    const res = await axios.post(settings.libretranslate_url, {
+    const response = await axios.post(API_URL, {
       q: text,
-      source: 'zh',
-      target: target,
-      format: 'text'
-    }, { timeout: 20000 });
-    if(res.data && res.data.translatedText) return res.data.translatedText;
-    // some endpoints return {translatedText} or plain text
-    return res.data.translatedText || (typeof res.data === 'string' ? res.data : '');
-  } catch (e) {
-    console.warn('Translate error', e.message);
-    return '';
+      source: "auto",
+      target: targetLang,
+      format: "text",
+    });
+    return response.data.translatedText;
+  } catch (error) {
+    console.error("Translation error:", error.message);
+    return text; // fallback to original
   }
 }
 
